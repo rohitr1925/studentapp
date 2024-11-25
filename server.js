@@ -5,6 +5,7 @@ const { BlobServiceClient } = require('@azure/storage-blob');
 const sql = require('mssql');
 const fs = require('fs');
 require('dotenv').config();
+const path = require('path');
 
 // Initialize express app
 const app = express();
@@ -16,20 +17,14 @@ app.use(cors());
 app.use(express.static('public')); // Serve files from the 'public' directory
 app.use(express.json()); // To parse JSON bodies
 
-const port = process.env.PORT || 3000;
+const port = 3000;
 
-// Set up multer for file upload
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Temp folder for file uploads
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname); // Unique file name
-  },
+// Serve the index.html as the main page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
-const upload = multer({ storage });
 
-// SQL Configurations from environment variables
+// SQL Configurations
 const hubSQLConfig = {
   user: process.env.SQL_HUB_USER,
   password: process.env.SQL_HUB_PASSWORD,
@@ -64,7 +59,7 @@ async function uploadFileToBlob(file) {
   const blockBlobClient = containerClient.getBlockBlobClient(file.filename);
 
   await blockBlobClient.uploadFile(file.path);
-  return blockBlobClient.url; // Return URL of the uploaded blob
+  return blockBlobClient.url;
 }
 
 // SQL Functions
@@ -103,35 +98,61 @@ app.post('/upload', upload.single('file'), async (req, res) => {
       return res.status(400).send('No file uploaded.');
     }
 
-    // Upload the file to Azure Blob Storage
     const fileUrl = await uploadFileToBlob(req.file);
 
-    // Save metadata to Hub DB
     await saveMetadataToHubDB(req.file.filename, fileUrl, studentName, rollNumber, section, subject);
-
-    // Log the sync operation to Metadata DB
     await logSyncOperation(req.file.filename, 'Success');
 
-    // Return success response
     res.status(200).json({ message: 'File uploaded successfully.', fileUrl });
-
-    // Clean up the temp file after upload
     fs.unlinkSync(req.file.path);
   } catch (err) {
     console.error('Upload error:', err);
-
-    // Log failure to Metadata DB
     await logSyncOperation(req.file?.filename || 'unknown', 'Failed');
-
-    // Return error response
     res.status(500).send('Upload failed.');
   }
 });
 
-// Ensure Azure Blob container exists
+// Handle Login Request
+app.post('/login', async (req, res) => {
+  const { rollNumber, dob } = req.body;
+  try {
+    await sql.connect(hubSQLConfig);
+    const result = await sql.query(`
+      SELECT * FROM Students WHERE rollNumber = '${rollNumber}' AND dob = '${dob}'
+    `);
+
+    if (result.recordset.length > 0) {
+      res.status(200).json({ message: 'Login successful' });
+    } else {
+      res.status(400).json({ message: 'Invalid credentials' });
+    }
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Handle Registration Request
+app.post('/register', async (req, res) => {
+  const { rollNumber, fullName, email, dob, section } = req.body;
+  try {
+    await sql.connect(hubSQLConfig);
+    const result = await sql.query(`
+      INSERT INTO Students (rollNumber, fullName, email, dob, section)
+      VALUES ('${rollNumber}', '${fullName}', '${email}', '${dob}', '${section}')
+    `);
+
+    res.status(201).json({ message: 'Registration successful' });
+  } catch (err) {
+    console.error('Registration error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Ensure container exists
 createContainerIfNotExists();
 
-// Start the server
+// Start server
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });
