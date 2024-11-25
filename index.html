@@ -92,7 +92,7 @@
   <div class="container" id="loginContainer">
     <!-- Login Form -->
     <h1>Login</h1>
-    <form id="loginForm">
+    <form id="loginForm" onsubmit="handleLogin(event)">
       <label for="rollNumber">Roll Number</label>
       <input type="text" id="rollNumber" name="rollNumber" placeholder="Enter your roll number" required>
       
@@ -136,6 +136,7 @@
     const loginContainer = document.getElementById('loginContainer');
     const registrationContainer = document.getElementById('registrationContainer');
 
+    // Toggle between login and registration forms
     function showRegistration() {
       loginContainer.style.display = 'none';
       registrationContainer.style.display = 'block';
@@ -144,6 +145,23 @@
     function showLogin() {
       registrationContainer.style.display = 'none';
       loginContainer.style.display = 'block';
+    }
+
+    // Handle login form submission
+    function handleLogin(event) {
+      event.preventDefault(); // Prevent page refresh on form submit
+
+      const rollNumber = document.getElementById('rollNumber').value;
+      const dob = document.getElementById('dob').value;
+
+      // Add your authentication logic here (e.g., check credentials with a backend API)
+      if (rollNumber === "12345" && dob === "2000-01-01") {
+        alert("Login successful!");
+        // Redirect to another page or perform actions after successful login
+        window.location.href = "/dashboard"; // Example: redirect to dashboard
+      } else {
+        alert("Invalid credentials. Please try again.");
+      }
     }
   </script>
 </body>
