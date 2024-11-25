@@ -16,20 +16,20 @@ app.use(cors());
 app.use(express.static('public')); // Serve files from the 'public' directory
 app.use(express.json()); // To parse JSON bodies
 
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 // Set up multer for file upload
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Temp folder
+    cb(null, 'uploads/'); // Temp folder for file uploads
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
+    cb(null, Date.now() + '-' + file.originalname); // Unique file name
   },
 });
 const upload = multer({ storage });
 
-// SQL Configurations
+// SQL Configurations from environment variables
 const hubSQLConfig = {
   user: process.env.SQL_HUB_USER,
   password: process.env.SQL_HUB_PASSWORD,
@@ -64,7 +64,7 @@ async function uploadFileToBlob(file) {
   const blockBlobClient = containerClient.getBlockBlobClient(file.filename);
 
   await blockBlobClient.uploadFile(file.path);
-  return blockBlobClient.url;
+  return blockBlobClient.url; // Return URL of the uploaded blob
 }
 
 // SQL Functions
@@ -103,24 +103,35 @@ app.post('/upload', upload.single('file'), async (req, res) => {
       return res.status(400).send('No file uploaded.');
     }
 
+    // Upload the file to Azure Blob Storage
     const fileUrl = await uploadFileToBlob(req.file);
 
+    // Save metadata to Hub DB
     await saveMetadataToHubDB(req.file.filename, fileUrl, studentName, rollNumber, section, subject);
+
+    // Log the sync operation to Metadata DB
     await logSyncOperation(req.file.filename, 'Success');
 
+    // Return success response
     res.status(200).json({ message: 'File uploaded successfully.', fileUrl });
+
+    // Clean up the temp file after upload
     fs.unlinkSync(req.file.path);
   } catch (err) {
     console.error('Upload error:', err);
+
+    // Log failure to Metadata DB
     await logSyncOperation(req.file?.filename || 'unknown', 'Failed');
+
+    // Return error response
     res.status(500).send('Upload failed.');
   }
 });
 
-// Ensure container exists
+// Ensure Azure Blob container exists
 createContainerIfNotExists();
 
-// Start server
+// Start the server
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });
