@@ -9,23 +9,14 @@ const path = require('path');
 
 // Initialize express app
 const app = express();
-
-// Enable CORS for all routes
 app.use(cors());
-
-// Middleware setup
-app.use(express.static('public')); // Serve files from the 'public' directory
-app.use(express.json()); // To parse JSON bodies
+app.use(express.static('public'));
+app.use(express.json());
 
 const port = 3000;
 
-// Serve the index.html as the main page
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
 // SQL Configurations
-const hubSQLConfig = {
+const dbConfig = {
   user: process.env.SQL_HUB_USER,
   password: process.env.SQL_HUB_PASSWORD,
   server: process.env.SQL_HUB_SERVER,
@@ -33,13 +24,8 @@ const hubSQLConfig = {
   options: { encrypt: true, trustServerCertificate: false },
 };
 
-const metadataSQLConfig = {
-  user: process.env.SQL_METADATA_USER,
-  password: process.env.SQL_METADATA_PASSWORD,
-  server: process.env.SQL_METADATA_SERVER,
-  database: process.env.SQL_METADATA_DATABASE,
-  options: { encrypt: true, trustServerCertificate: false },
-};
+// Middleware for file uploads
+const upload = multer({ dest: 'uploads/' });
 
 // Azure Blob Functions
 async function createContainerIfNotExists() {
@@ -62,67 +48,25 @@ async function uploadFileToBlob(file) {
   return blockBlobClient.url;
 }
 
-// SQL Functions
-async function saveMetadataToHubDB(fileName, fileUrl, studentName, rollNumber, section, subject) {
-  try {
-    await sql.connect(hubSQLConfig);
-    await sql.query(`
-      INSERT INTO FileMetadata (fileName, fileUrl, studentName, rollNumber, section, subject)
-      VALUES ('${fileName}', '${fileUrl}', '${studentName}', '${rollNumber}', '${section}', '${subject}')
-    `);
-    console.log('Metadata saved to Hub DB.');
-  } catch (err) {
-    console.error('Error saving metadata to Hub DB:', err);
-  }
-}
+// Routes
 
-async function logSyncOperation(fileName, status) {
-  try {
-    await sql.connect(metadataSQLConfig);
-    await sql.query(`
-      INSERT INTO SyncLog (operation, sourceDatabase, targetDatabase, syncStatus, fileName)
-      VALUES ('Upload', 'SyncHubDB', 'SyncMetadataDB', '${status}', '${fileName}')
-    `);
-    console.log('Sync operation logged in Metadata DB.');
-  } catch (err) {
-    console.error('Error logging sync operation:', err);
-  }
-}
-
-// File Upload Route
-app.post('/upload', upload.single('file'), async (req, res) => {
-  try {
-    const { studentName, rollNumber, section, subject } = req.body;
-
-    if (!req.file) {
-      return res.status(400).send('No file uploaded.');
-    }
-
-    const fileUrl = await uploadFileToBlob(req.file);
-
-    await saveMetadataToHubDB(req.file.filename, fileUrl, studentName, rollNumber, section, subject);
-    await logSyncOperation(req.file.filename, 'Success');
-
-    res.status(200).json({ message: 'File uploaded successfully.', fileUrl });
-    fs.unlinkSync(req.file.path);
-  } catch (err) {
-    console.error('Upload error:', err);
-    await logSyncOperation(req.file?.filename || 'unknown', 'Failed');
-    res.status(500).send('Upload failed.');
-  }
+// Serve the index.html as the main page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Handle Login Request
 app.post('/login', async (req, res) => {
   const { rollNumber, dob } = req.body;
   try {
-    await sql.connect(hubSQLConfig);
-    const result = await sql.query(`
-      SELECT * FROM Students WHERE rollNumber = '${rollNumber}' AND dob = '${dob}'
-    `);
+    await sql.connect(dbConfig);
+    const result = await sql.query(
+      `SELECT id, fullName FROM students WHERE rollNumber = @rollNumber AND dob = @dob`,
+      { rollNumber, dob }
+    );
 
     if (result.recordset.length > 0) {
-      res.status(200).json({ message: 'Login successful' });
+      res.status(200).json({ studentId: result.recordset[0].id, name: result.recordset[0].fullName });
     } else {
       res.status(400).json({ message: 'Invalid credentials' });
     }
@@ -132,20 +76,54 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Handle Registration Request
-app.post('/register', async (req, res) => {
-  const { rollNumber, fullName, email, dob, section } = req.body;
+// Dashboard Route
+app.get('/api/dashboard/:studentId', async (req, res) => {
+  const { studentId } = req.params;
   try {
-    await sql.connect(hubSQLConfig);
-    const result = await sql.query(`
-      INSERT INTO Students (rollNumber, fullName, email, dob, section)
-      VALUES ('${rollNumber}', '${fullName}', '${email}', '${dob}', '${section}')
-    `);
+    await sql.connect(dbConfig);
 
-    res.status(201).json({ message: 'Registration successful' });
+    // Query student and assignments data
+    const studentQuery = `SELECT * FROM students WHERE id = @studentId`;
+    const assignmentsQuery = `SELECT * FROM assignments WHERE studentId = @studentId`;
+
+    const [studentResult, assignmentsResult] = await Promise.all([
+      sql.query(studentQuery, { studentId }),
+      sql.query(assignmentsQuery, { studentId }),
+    ]);
+
+    res.status(200).json({
+      student: studentResult.recordset[0],
+      assignments: assignmentsResult.recordset,
+    });
   } catch (err) {
-    console.error('Registration error:', err);
+    console.error('Error fetching dashboard data:', err);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Assignment Submission Route
+app.post('/submit-assignment', upload.single('file'), async (req, res) => {
+  try {
+    const { studentId, assignmentId, submissionDate } = req.body;
+
+    if (!req.file) {
+      return res.status(400).send('No file uploaded.');
+    }
+
+    const fileUrl = await uploadFileToBlob(req.file);
+
+    await sql.connect(dbConfig);
+    await sql.query(
+      `INSERT INTO assignment_submission (studentId, assignmentId, submissionDate, fileUrl)
+       VALUES (@studentId, @assignmentId, @submissionDate, @fileUrl)`,
+      { studentId, assignmentId, submissionDate, fileUrl }
+    );
+
+    res.status(200).json({ message: 'Assignment submitted successfully.', fileUrl });
+    fs.unlinkSync(req.file.path);
+  } catch (err) {
+    console.error('Assignment submission error:', err);
+    res.status(500).json({ message: 'Submission failed.' });
   }
 });
 
@@ -156,3 +134,4 @@ createContainerIfNotExists();
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });
+  
