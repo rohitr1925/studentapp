@@ -3,204 +3,193 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login & Registration</title>
+  <title>Student Dashboard</title>
   <style>
+    /* Global Styles */
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(to right, #4facfe, #00f2fe);
-      color: #333;
+      font-family: 'Roboto', Arial, sans-serif;
+      background: linear-gradient(120deg, #84fab0, #8fd3f4);
+      color: #444;
       margin: 0;
       padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
     }
 
+    /* Container Styling */
     .container {
-      background: #fff;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      max-width: 400px;
-      width: 100%;
+      max-width: 900px;
+      margin: 50px auto;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
     }
 
+    /* Header Styling */
     h1 {
       text-align: center;
       color: #2c3e50;
+      background: linear-gradient(to right, #6a11cb, #2575fc);
+      color: white;
+      padding: 20px 0;
+      margin: 0;
+      font-size: 2.2em;
+    }
+
+    /* Section Styling */
+    .section {
+      padding: 20px;
+    }
+
+    h2 {
+      border-bottom: 2px solid #eee;
+      padding-bottom: 10px;
+      color: #333;
+      font-size: 1.5em;
       margin-bottom: 20px;
     }
 
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-
-    label {
-      font-size: 1em;
-      color: #2c3e50;
-    }
-
-    input {
-      padding: 10px;
-      font-size: 1em;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      transition: border-color 0.3s ease;
-    }
-
-    input:focus {
-      border-color: #4facfe;
-      outline: none;
-    }
-
-    button {
-      padding: 12px 20px;
-      background: linear-gradient(to right, #6a11cb, #2575fc);
-      color: white;
+    p {
       font-size: 1.1em;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      margin: 10px 0;
     }
 
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-    }
-
-    .switch-link {
-      text-align: center;
+    /* Table Styling */
+    table {
+      width: 100%;
+      border-collapse: collapse;
       margin-top: 10px;
     }
 
-    .switch-link a {
-      color: #2575fc;
-      text-decoration: none;
-      font-weight: bold;
+    th, td {
+      text-align: center;
+      padding: 12px;
+      font-size: 1em;
     }
 
-    .switch-link a:hover {
-      text-decoration: underline;
+    th {
+      background-color: #6a11cb;
+      color: white;
+    }
+
+    td {
+      background-color: #f9f9f9;
+      border-bottom: 1px solid #ddd;
+    }
+
+    tr:hover td {
+      background-color: #f1faff;
+    }
+
+    /* Button Styling */
+    .button {
+      display: inline-block;
+      padding: 12px 25px;
+      background: linear-gradient(to right, #2575fc, #6a11cb);
+      color: white;
+      text-decoration: none;
+      font-size: 1.1em;
+      font-weight: bold;
+      border-radius: 25px;
+      text-align: center;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .button:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Loading State */
+    .loading {
+      text-align: center;
+      font-size: 1.1em;
+      color: #888;
     }
   </style>
 </head>
 <body>
-  <div class="container" id="loginContainer">
-    <!-- Login Form -->
-    <h1>Login</h1>
-    <form id="loginForm" onsubmit="handleLogin(event)">
-      <label for="rollNumber">Roll Number</label>
-      <input type="text" id="rollNumber" name="rollNumber" placeholder="Enter your roll number" required>
-      
-      <label for="dob">Date of Birth</label>
-      <input type="date" id="dob" name="dob" required>
-      
-      <button type="submit">Login</button>
-    </form>
-    <div class="switch-link">
-      <p>Don't have an account? <a href="#" onclick="showRegistration()">Register</a></p>
-    </div>
-  </div>
+  <div class="container">
+    <h1>Student Dashboard</h1>
 
-  <div class="container" id="registrationContainer" style="display: none;">
-    <!-- Registration Form -->
-    <h1>Register</h1>
-    <form id="registrationForm" onsubmit="handleRegistration(event)">
-      <label for="rollNumberReg">Roll Number</label>
-      <input type="text" id="rollNumberReg" name="rollNumber" placeholder="Enter your roll number" required>
-      
-      <label for="fullName">Full Name</label>
-      <input type="text" id="fullName" name="fullName" placeholder="Enter your full name" required>
-      
-      <label for="email">Email</label>
-      <input type="email" id="email" name="email" placeholder="Enter your email" required>
-      
-      <label for="dobReg">Date of Birth</label>
-      <input type="date" id="dobReg" name="dob" required>
-      
-      <label for="section">Section</label>
-      <input type="text" id="section" name="section" placeholder="Enter your section" required>
-      
-      <button type="submit">Register</button>
-    </form>
-    <div class="switch-link">
-      <p>Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
+    <!-- Student Details Section -->
+    <div class="section">
+      <h2>Your Details</h2>
+      <p><strong>Name:</strong> <span id="name">Loading...</span></p>
+      <p><strong>Roll Number:</strong> <span id="rollNumber">Loading...</span></p>
+      <p><strong>Section:</strong> <span id="section">Loading...</span></p>
+      <p><strong>Date of Birth:</strong> <span id="dob">Loading...</span></p>
+    </div>
+
+    <!-- Assignments Section -->
+    <div class="section">
+      <h2>Due Assignments</h2>
+      <div id="loadingAssignments" class="loading">Loading assignments...</div>
+      <table style="display: none;">
+        <thead>
+          <tr>
+            <th>Subject</th>
+            <th>Assignment Title</th>
+            <th>Due Date</th>
+          </tr>
+        </thead>
+        <tbody id="assignmentTable"></tbody>
+      </table>
+    </div>
+
+    <!-- Submit Assignment Button -->
+    <div class="section" style="text-align: center;">
+      <a href="submit-assignment.html" class="button">Submit Assignments</a>
     </div>
   </div>
 
   <script>
-    const loginContainer = document.getElementById('loginContainer');
-    const registrationContainer = document.getElementById('registrationContainer');
-
-    // Toggle between login and registration forms
-    function showRegistration() {
-      loginContainer.style.display = 'none';
-      registrationContainer.style.display = 'block';
-    }
-
-    function showLogin() {
-      registrationContainer.style.display = 'none';
-      loginContainer.style.display = 'block';
-    }
-
-    // Handle login form submission
-    async function handleLogin(event) {
-      event.preventDefault();
-      const rollNumber = document.getElementById('rollNumber').value;
-      const dob = document.getElementById('dob').value;
-
+    async function fetchStudentDetails() {
       try {
-        const response = await fetch('/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ rollNumber, dob })
-        });
-
-        const result = await response.json();
-        alert(result.message);
-
+        const response = await fetch('/api/student-details'); // Replace with actual API endpoint
+        const data = await response.json();
         if (response.ok) {
-          window.location.href = '/dashboard'; // Redirect after successful login
+          document.getElementById('name').textContent = data.name;
+          document.getElementById('rollNumber').textContent = data.rollNumber;
+          document.getElementById('section').textContent = data.section;
+          document.getElementById('dob').textContent = data.dob;
+        } else {
+          console.error('Error fetching student details:', data.message);
         }
       } catch (error) {
-        console.error('Login error:', error);
-        alert('An error occurred. Please try again.');
+        console.error('Error:', error);
       }
     }
 
-    // Handle registration form submission
-    async function handleRegistration(event) {
-      event.preventDefault();
-      const formData = {
-        rollNumber: document.getElementById('rollNumberReg').value,
-        fullName: document.getElementById('fullName').value,
-        email: document.getElementById('email').value,
-        dob: document.getElementById('dobReg').value,
-        section: document.getElementById('section').value
-      };
-
+    async function fetchDueAssignments() {
       try {
-        const response = await fetch('/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData)
-        });
-
-        const result = await response.json();
-        alert(result.message);
-
+        const response = await fetch('/api/due-assignments'); // Replace with actual API endpoint
+        const assignments = await response.json();
         if (response.ok) {
-          showLogin();
+          const tableBody = document.getElementById('assignmentTable');
+          const table = tableBody.parentElement;
+          document.getElementById('loadingAssignments').style.display = 'none';
+          table.style.display = 'table';
+
+          assignments.forEach((assignment) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${assignment.subject}</td>
+              <td>${assignment.title}</td>
+              <td>${assignment.dueDate}</td>
+            `;
+            tableBody.appendChild(row);
+          });
+        } else {
+          console.error('Error fetching assignments:', assignments.message);
         }
       } catch (error) {
-        console.error('Registration error:', error);
-        alert('An error occurred. Please try again.');
+        console.error('Error:', error);
       }
     }
+
+    // Fetch student details and assignments on page load
+    fetchStudentDetails();
+    fetchDueAssignments();
   </script>
 </body>
-</html>
+</html> 
