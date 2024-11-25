@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assignment Submission</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #4facfe, #00f2fe);
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 50px auto;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      padding: 20px;
+      text-align: center;
+    }
+    h1 {
+      color: #2c3e50;
+      font-size: 2.5em;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      font-size: 1.2em;
+      color: #34495e;
+      margin-bottom: 10px;
+    }
+    input, select {
+      width: 90%;
+      margin: 10px auto;
+      padding: 10px;
+      font-size: 1em;
+      border: 1px solid #bdc3c7;
+      border-radius: 5px;
+    }
+    button {
+      background: linear-gradient(to right, #6a11cb, #2575fc);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 1.1em;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    button:hover {
+      background: linear-gradient(to right, #2575fc, #6a11cb);
+      transform: translateY(-2px);
+    }
+    .message, .error {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 5px;
+      font-size: 1.1em;
+    }
+    .message {
+      background: #eafaf1;
+      color: #2ecc71;
+      border: 1px solid #27ae60;
+    }
+    .error {
+      background: #fdeaea;
+      color: #e74c3c;
+      border: 1px solid #c0392b;
+    }
+    footer {
+      margin-top: 30px;
+      text-align: center;
+      font-size: 0.9em;
+      color: #ecf0f1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Assignment Submission</h1>
+    <form id="submissionForm" enctype="multipart/form-data">
+      <label for="name">Name:</label>
+      <input type="text" id="name" name="name" placeholder="Enter your name" required>
+
+      <label for="rollNumber">Roll Number:</label>
+      <input type="text" id="rollNumber" name="rollNumber" placeholder="Enter your roll number" required>
+
+      <label for="section">Section:</label>
+      <input type="text" id="section" name="section" placeholder="Enter your section" required>
+
+      <label for="subject">Subject:</label>
+      <input type="text" id="subject" name="subject" placeholder="Enter the subject" required>
+
+      <label for="file">Upload File:</label>
+      <input type="file" id="file" name="file" required>
+
+      <button type="submit">Submit</button>
+    </form>
+    <div id="responseMessage"></div>
+    <div id="fileUrl"></div>
+  </div>
+  <footer>
+    &copy; 2024 Assignment Submission | Powered by Azure
+  </footer>
+
+  <script>
+    const form = document.getElementById('submissionForm');
+    const responseMessage = document.getElementById('responseMessage');
+    const fileUrlDiv = document.getElementById('fileUrl');
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch('http://localhost:3000/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          responseMessage.textContent = result.message;
+          responseMessage.className = 'message';
+          fileUrlDiv.innerHTML = `
+            <strong>File URL:</strong> 
+            <a href="${result.fileUrl}" target="_blank">${result.fileUrl}</a>
+          `;
+        } else {
+          responseMessage.textContent = 'Error during submission.';
+          responseMessage.className = 'error';
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        responseMessage.textContent = 'An unexpected error occurred.';
+        responseMessage.className = 'error';
+      }
+    });
+  </script>
+</body>
+</html>
