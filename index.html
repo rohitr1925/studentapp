@@ -109,7 +109,7 @@
   <div class="container" id="registrationContainer" style="display: none;">
     <!-- Registration Form -->
     <h1>Register</h1>
-    <form id="registrationForm">
+    <form id="registrationForm" onsubmit="handleRegistration(event)">
       <label for="rollNumberReg">Roll Number</label>
       <input type="text" id="rollNumberReg" name="rollNumber" placeholder="Enter your roll number" required>
       
@@ -148,24 +148,57 @@
     }
 
     // Handle login form submission
-    function handleLogin(event) {
-      event.preventDefault(); // Prevent page refresh on form submit
-
+    async function handleLogin(event) {
+      event.preventDefault();
       const rollNumber = document.getElementById('rollNumber').value;
-      let dob = document.getElementById('dob').value;
+      const dob = document.getElementById('dob').value;
 
-      // Format the date if necessary (this ensures it's in yyyy-mm-dd format)
-      const formattedDob = new Date(dob).toISOString().split('T')[0];  // Formats the date to yyyy-mm-dd
+      try {
+        const response = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rollNumber, dob })
+        });
 
-      console.log("Formatted DOB:", formattedDob);  // You can log it to check the format
+        const result = await response.json();
+        alert(result.message);
 
-      // Authentication logic (for example, hardcoded values)
-      if (rollNumber === "12345" && formattedDob === "2000-01-01") {
-        alert("Login successful!");
-        // Redirect to another page or perform actions after successful login
-        window.location.href = "/dashboard"; // Example: redirect to dashboard
-      } else {
-        alert("Invalid credentials. Please try again.");
+        if (response.ok) {
+          window.location.href = '/dashboard'; // Redirect after successful login
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        alert('An error occurred. Please try again.');
+      }
+    }
+
+    // Handle registration form submission
+    async function handleRegistration(event) {
+      event.preventDefault();
+      const formData = {
+        rollNumber: document.getElementById('rollNumberReg').value,
+        fullName: document.getElementById('fullName').value,
+        email: document.getElementById('email').value,
+        dob: document.getElementById('dobReg').value,
+        section: document.getElementById('section').value
+      };
+
+      try {
+        const response = await fetch('/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+        alert(result.message);
+
+        if (response.ok) {
+          showLogin();
+        }
+      } catch (error) {
+        console.error('Registration error:', error);
+        alert('An error occurred. Please try again.');
       }
     }
   </script>
