@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login & Registration</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #4facfe, #00f2fe);
+      color: #333;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      max-width: 400px;
+      width: 100%;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    label {
+      font-size: 1em;
+      color: #2c3e50;
+    }
+
+    input {
+      padding: 10px;
+      font-size: 1em;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      transition: border-color 0.3s ease;
+    }
+
+    input:focus {
+      border-color: #4facfe;
+      outline: none;
+    }
+
+    button {
+      padding: 12px 20px;
+      background: linear-gradient(to right, #6a11cb, #2575fc);
+      color: white;
+      font-size: 1.1em;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .switch-link {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .switch-link a {
+      color: #2575fc;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .switch-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="loginContainer">
+    <!-- Login Form -->
+    <h1>Login</h1>
+    <form id="loginForm">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" placeholder="Enter your email" required>
+      
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" placeholder="Enter your password" required>
+      
+      <button type="submit">Login</button>
+    </form>
+    <div class="switch-link">
+      <p>Don't have an account? <a href="#" onclick="showRegistration()">Register</a></p>
+    </div>
+  </div>
+
+  <div class="container" id="registrationContainer" style="display: none;">
+    <!-- Registration Form -->
+    <h1>Register</h1>
+    <form id="registrationForm">
+      <label for="fullName">Full Name</label>
+      <input type="text" id="fullName" name="fullName" placeholder="Enter your full name" required>
+      
+      <label for="emailReg">Email</label>
+      <input type="email" id="emailReg" name="email" placeholder="Enter your email" required>
+      
+      <label for="passwordReg">Password</label>
+      <input type="password" id="passwordReg" name="password" placeholder="Enter your password" required>
+      
+      <label for="confirmPassword">Confirm Password</label>
+      <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password" required>
+      
+      <button type="submit">Register</button>
+    </form>
+    <div class="switch-link">
+      <p>Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
+    </div>
+  </div>
+
+  <script>
+    const loginContainer = document.getElementById('loginContainer');
+    const registrationContainer = document.getElementById('registrationContainer');
+
+    function showRegistration() {
+      loginContainer.style.display = 'none';
+      registrationContainer.style.display = 'block';
+    }
+
+    function showLogin() {
+      registrationContainer.style.display = 'none';
+      loginContainer.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
