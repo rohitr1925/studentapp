@@ -6,7 +6,6 @@ const sql = require('mssql');
 const fs = require('fs');
 const path = require('path');
 const Joi = require('joi');
-require('dotenv').config();
 
 // Initialize express app
 const app = express();
@@ -18,20 +17,24 @@ const port = 3000;
 
 // SQL Configurations
 const dbConfig = {
-  user: process.env.SQL_HUB_USER,
-  password: process.env.SQL_HUB_PASSWORD,
-  server: process.env.SQL_HUB_SERVER,
-  database: process.env.SQL_HUB_DATABASE,
+  user: 'sqladmin',
+  password: 'Admin@1234',
+  server: 'sqlsyncserver.database.windows.net',
+  database: 'StudentManagementDB',
   options: { encrypt: true, trustServerCertificate: false },
 };
+
+// Azure Blob Storage Configurations
+const azureConnectionString = 'DefaultEndpointsProtocol=https;AccountName=syncblobstorage;AccountKey=r91/o0jq1XK0/HjvQrxEjyQa1iaQ0lnlW1SaMadMiM56vSllxah8xSVjo0NWMsdsCUvRjJ3TnGY/+ASt1DR1Ow==;EndpointSuffix=core.windows.net';
+const azureContainerName = 'syncdata';
 
 // Middleware for file uploads
 const upload = multer({ dest: 'uploads/' });
 
 // Azure Blob Functions
 async function createContainerIfNotExists() {
-  const blobServiceClient = BlobServiceClient.fromConnectionString(process.env.AZURE_STORAGE_CONNECTION_STRING);
-  const containerClient = blobServiceClient.getContainerClient(process.env.AZURE_CONTAINER_NAME);
+  const blobServiceClient = BlobServiceClient.fromConnectionString(azureConnectionString);
+  const containerClient = blobServiceClient.getContainerClient(azureContainerName);
 
   const exists = await containerClient.exists();
   if (!exists) {
@@ -41,8 +44,8 @@ async function createContainerIfNotExists() {
 }
 
 async function uploadFileToBlob(file) {
-  const blobServiceClient = BlobServiceClient.fromConnectionString(process.env.AZURE_STORAGE_CONNECTION_STRING);
-  const containerClient = blobServiceClient.getContainerClient(process.env.AZURE_CONTAINER_NAME);
+  const blobServiceClient = BlobServiceClient.fromConnectionString(azureConnectionString);
+  const containerClient = blobServiceClient.getContainerClient(azureContainerName);
   const blockBlobClient = containerClient.getBlockBlobClient(file.filename);
 
   await blockBlobClient.uploadFile(file.path);
